@@ -1,0 +1,24 @@
+{
+  "name": "alpha-docker-node",
+  "version": "1.0.0",
+  "description": "ALPHA: Docker + Node app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/xoxgn/alpha-docker-node.git"
+  },
+  "keywords": [
+    "docker",
+    "node",
+    "typescript"
+  ],
+  "author": "xoxgn",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xoxgn/alpha-docker-node/issues"
+  },
+  "homepage": "https://github.com/xoxgn/alpha-docker-node#readme"
+}
