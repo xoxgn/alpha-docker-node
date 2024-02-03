@@ -11,7 +11,8 @@ app.put('/items/:id', updateItem);
 app.delete('/items/:id', deleteItem);
 
 app.get("/", (req, res) => {
-    res.send("The data endpoint is at '/items'")
+    res.setHeader("Content-Type", "text/html")
+    res.send('<h1>The data endpoint is at "<code>/items</code>"</h1>')
 })
 
 db.init().then(() => {
