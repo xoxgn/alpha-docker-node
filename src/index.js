@@ -4,12 +4,15 @@ const db = require('./persistence');
 const {addItem, deleteItem, getItems, updateItem} = require("./routes")
 
 app.use(express.json());
-app.use(express.static(__dirname + '/static'));
 
 app.get('/items', getItems);
 app.post('/items', addItem);
 app.put('/items/:id', updateItem);
 app.delete('/items/:id', deleteItem);
+
+app.get("/", (req, res) => {
+    res.send("The data endpoint is at '/items'")
+})
 
 db.init().then(() => {
     app.listen(3000, () => console.log('Listening on port 3000'));
