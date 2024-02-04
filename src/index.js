@@ -24,17 +24,39 @@ function receptionist(request, response) {
         body: request.body,
     });
 
-    concierge(sanitizedRequest)
+    reservationAgent(sanitizedRequest)
         .then(({headers, statusCode, data}) => response.set(headers).status(statusCode).send(data))
         .catch(e => response.status(500).end())
 }
 
-function concierge(request) {
-    return new Promise((resolve, reject) => resolve({
-        headers: {},
-        statusCode: 200,
-        data: {}
-    }))
+function reservationAgent({database}) {
+    // return new Promise((resolve, reject) => resolve({
+    //     headers: {},
+    //     statusCode: 200,
+    //     data: {}
+    // }))
+
+    return async function concierge(request) {
+        switch(request.method) {
+            case "POST":
+                return addItem(request);
+            case "GET":
+                return getItems(request);
+            case "PUT":
+                return updateItem(request);
+            case "DELETE":
+                return deleteItem(request);
+
+            default:
+                return maker({
+                    type: "error",
+                    data: {
+                        statusCode: 405,
+                        statusMessage: `${request.method} method not allowed`
+                    }
+                })
+        }
+    }
 }
 
 db.init().then(() => {
