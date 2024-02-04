@@ -5,15 +5,15 @@ const {addItem, deleteItem, getItems, updateItem} = require("./routes")
 
 app.use(express.json());
 
-app.get('/items', getItems);
-app.post('/items', addItem);
-app.put('/items/:id', updateItem);
-app.delete('/items/:id', deleteItem);
+app.all('/items', receptionist);
+app.all('/items/:id', receptionist);
 
 app.get("/", (req, res) => {
     res.setHeader("Content-Type", "text/html")
     res.send('<h1>The data endpoint is at "<code>/items</code>"</h1>')
 })
+
+const concierge = reservationAgent({database: db});
 
 function receptionist(request, response) {
     const sanitizedRequest = Object.freeze({
@@ -24,7 +24,7 @@ function receptionist(request, response) {
         body: request.body,
     });
 
-    reservationAgent(sanitizedRequest)
+    concierge(sanitizedRequest)
         .then(({headers, statusCode, data}) => response.set(headers).status(statusCode).send(data))
         .catch(e => response.status(500).end())
 }
@@ -36,16 +36,16 @@ function reservationAgent({database}) {
     //     data: {}
     // }))
 
-    return async function concierge(request) {
+    return async function handler(request) {
         switch(request.method) {
             case "POST":
-                return addItem(request);
+                return addItem({request, database});
             case "GET":
-                return getItems(request);
+                return getItems({request, database});
             case "PUT":
-                return updateItem(request);
+                return updateItem({request, database});
             case "DELETE":
-                return deleteItem(request);
+                return deleteItem({request, database});
 
             default:
                 return maker({
