@@ -1,7 +1,13 @@
-const db = require('../persistence');
 const {v4 : uuid} = require('uuid');
 
-async function addItem(req, res) {
+/**
+ * 
+ * 
+ * @param {RequestAgnostic} req 
+ * @param {import('../persistence').PersistenceModule} db 
+ * @returns {ResponseAgnostic} 
+ */
+async function addItem(req, db) {
     const item = {
         id: uuid(),
         name: req.body.name,
@@ -9,29 +15,108 @@ async function addItem(req, res) {
     };
 
     await db.storeItem(item);
-    res.send(item);
+
+    return {
+        headers: {
+            "Content-Type": "application/json"
+        },
+        statusCode: 200,
+        data: JSON.stringify(item)
+    }
 };
 
+/**
+ * 
+ * 
+ * @param {RequestAgnostic} req 
+ * @param {import('../persistence').PersistenceModule} db 
+ * @returns {ResponseAgnostic} 
+ */
+async function getItems (req, db) {
+    const {id} = req.pathParams || {}
 
-async function getItems (req, res) {
-    const items = await db.getItems();
-    res.send(items);
+    const result = id 
+        ? await db.getItem(id) 
+        : await db.getItems();
+
+    return {
+        headers: {
+            "Content-Type": "application/json"
+        },
+        statusCode: 200,
+        data: JSON.stringify(result)
+    }
 };
 
+/**
+ * 
+ * 
+ * @param {RequestAgnostic} req 
+ * @param {import('../persistence').PersistenceModule} db 
+ * @returns {ResponseAgnostic} 
+ */
+async function updateItem (req, db) {
+    const {id} = req.pathParams || {}
+    const {completed, name} = req.body || {}
 
-async function updateItem (req, res) {
-    await db.updateItem(req.params.id, {
-        name: req.body.name,
-        completed: req.body.completed,
+    await db.updateItem(id, {
+        name: name,
+        completed: completed,
     });
-    const item = await db.getItem(req.params.id);
-    res.send(item);
+    const item = await db.getItem(id);
+
+    return {
+        headers: {
+            "Content-Type": "application/json"
+        },
+        statusCode: 200,
+        data: JSON.stringify(item)
+    }
 };
 
-async function deleteItem (req, res)  {
-    await db.removeItem(req.params.id);
-    res.sendStatus(200);
+/**
+ * 
+ * 
+ * @param {RequestAgnostic} req 
+ * @param {import('../persistence').PersistenceModule} db 
+ * @returns {ResponseAgnostic} 
+ */
+async function deleteItem (req, db)  {
+    const {id} = req.pathParams || {}
+
+    await db.removeItem(id);
+
+    return {
+        statusCode: 204
+    }
 };
+
+/**
+ * 
+ * @typedef RequestAgnostic
+ * @type {object}
+ * @property {string} path
+ * @property {string} method
+ * @property {{id?: string}} pathParams
+ * @property {{max: number, after: string, before: string}} queryParams
+ * @property {{name?: string, completed?: boolean}} body
+ * 
+ * 
+ * @typedef ResponseAgnostic
+ * @type {ResponseAgnosticFull | ResponseAgnosticSlim}
+ * 
+ * @typedef ResponseAgnosticSlim
+ * @type {object}
+ * @property {204} statusCode // HTTP No Content
+ * 
+ * @typedef ResponseAgnosticFull
+ * @type {object}
+ * @property {{"Content-Type": string}} headers
+ * @property {number} statusCode
+ * @property {string} data
+ * 
+ * 
+ */
 
 // =========
 module.exports = {

@@ -30,25 +30,19 @@ function receptionist(request, response) {
 }
 
 function reservationAgent({database}) {
-    // return new Promise((resolve, reject) => resolve({
-    //     headers: {},
-    //     statusCode: 200,
-    //     data: {}
-    // }))
-
     return async function handler(request) {
         switch(request.method) {
             case "POST":
-                return addItem({request, database});
+                return addItem(request, database);
             case "GET":
-                return getItems({request, database});
+                return getItems(request, database);
             case "PUT":
-                return updateItem({request, database});
+                return updateItem(request, database);
             case "DELETE":
-                return deleteItem({request, database});
+                return deleteItem(request, database);
 
             default:
-                return maker({
+                return maker({ // @todo
                     type: "error",
                     data: {
                         statusCode: 405,
