@@ -1,7 +1,9 @@
+// @ts-check
 const express = require('express');
 const app = express();
 const db = require('./persistence');
-const {addItem, deleteItem, getItems, updateItem} = require("./routes")
+const {addItem, deleteItem, getItems, updateItem} = require("./routes");
+const { maker } = require('./utils');
 
 app.use(express.json());
 
