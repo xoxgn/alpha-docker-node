@@ -1,16 +1,30 @@
+// @ts-check
 const {v4 : uuid} = require('uuid');
+const { maker } = require('../utils');
 
 /**
  * 
  * 
  * @param {RequestAgnostic} req 
  * @param {import('../persistence').PersistenceModule} db 
- * @returns {ResponseAgnostic} 
+ * @returns {Promise<ResponseAgnostic>} 
  */
 async function addItem(req, db) {
+    const {body} = req;
+
+    if (!body) {
+        return maker({
+            type: "error",
+            data: {
+                statusCode: 400,
+                statusMessage: "Bad Request. No POST body."
+            }
+        })
+    }
+
     const item = {
         id: uuid(),
-        name: req.body.name,
+        name: body.name,
         completed: false,
     };
 
@@ -21,7 +35,10 @@ async function addItem(req, db) {
             "Content-Type": "application/json"
         },
         statusCode: 200,
-        data: JSON.stringify(item)
+        data: {
+            success: true,
+            data: item
+        }
     }
 };
 
@@ -30,7 +47,7 @@ async function addItem(req, db) {
  * 
  * @param {RequestAgnostic} req 
  * @param {import('../persistence').PersistenceModule} db 
- * @returns {ResponseAgnostic} 
+ * @returns {Promise<ResponseAgnostic>} 
  */
 async function getItems (req, db) {
     const {id} = req.pathParams || {}
@@ -44,7 +61,10 @@ async function getItems (req, db) {
             "Content-Type": "application/json"
         },
         statusCode: 200,
-        data: JSON.stringify(result)
+        data: {
+            success: true,
+            data: result
+        }
     }
 };
 
@@ -53,7 +73,7 @@ async function getItems (req, db) {
  * 
  * @param {RequestAgnostic} req 
  * @param {import('../persistence').PersistenceModule} db 
- * @returns {ResponseAgnostic} 
+ * @returns {Promise<ResponseAgnostic>} 
  */
 async function updateItem (req, db) {
     const {id} = req.pathParams || {}
@@ -70,7 +90,7 @@ async function updateItem (req, db) {
             "Content-Type": "application/json"
         },
         statusCode: 200,
-        data: JSON.stringify(item)
+        data: {data: item, success: true}
     }
 };
 
@@ -79,7 +99,7 @@ async function updateItem (req, db) {
  * 
  * @param {RequestAgnostic} req 
  * @param {import('../persistence').PersistenceModule} db 
- * @returns {ResponseAgnostic} 
+ * @returns {Promise<ResponseAgnostic>} 
  */
 async function deleteItem (req, db)  {
     const {id} = req.pathParams || {}
@@ -87,7 +107,14 @@ async function deleteItem (req, db)  {
     await db.removeItem(id);
 
     return {
-        statusCode: 204
+        statusCode: 204,
+        headers: {
+            "Content-Type": "application/json"
+        },
+        data: {
+            success: true,
+            data: id
+        }
     }
 };
 
@@ -97,23 +124,16 @@ async function deleteItem (req, db)  {
  * @type {object}
  * @property {string} path
  * @property {string} method
- * @property {{id?: string}} pathParams
- * @property {{max: number, after: string, before: string}} queryParams
- * @property {{name?: string, completed?: boolean}} body
+ * @property {{id?: string}} [pathParams]
+ * @property {Partial<{max: number, after: string, before: string}>} [queryParams]
+ * @property {Partial<{name: string, completed: boolean}>} [body]
  * 
  * 
  * @typedef ResponseAgnostic
- * @type {ResponseAgnosticFull | ResponseAgnosticSlim}
- * 
- * @typedef ResponseAgnosticSlim
- * @type {object}
- * @property {204} statusCode // HTTP No Content
- * 
- * @typedef ResponseAgnosticFull
  * @type {object}
  * @property {{"Content-Type": string}} headers
  * @property {number} statusCode
- * @property {string} data
+ * @property {{success: boolean, data: unknown}} data
  * 
  * 
  */

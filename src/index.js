@@ -27,7 +27,7 @@ function receptionist(request, response) {
     });
 
     concierge(sanitizedRequest)
-        .then(({headers, statusCode, data}) => response.set(headers).status(statusCode).send(data))
+        .then(({headers, statusCode, data}) => response.set(headers).status(statusCode).send(JSON.stringify(data)))
         .catch(e => response.status(500).end())
 }
 

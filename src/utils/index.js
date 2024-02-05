@@ -12,7 +12,7 @@ const definition = {
     maker: function (config) {
 
         return {
-            data: config.data.statusMessage,
+            data: {success: false, data: config.data.statusMessage},
             headers: {
                 "Content-Type": "application/json",
             },
