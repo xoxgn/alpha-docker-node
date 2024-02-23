@@ -1,5 +1,5 @@
 // @ts-check
-const { maker, processor } = require('../utils');
+const { maker, processor, validateError, GENERIC_ERROR_MESSAGE } = require('../utils');
 
 /**
  * 
@@ -56,11 +56,13 @@ async function addItem(req, db) {
         }
 
     } catch (error) {
+        const checkedError = validateError(error);
+
         return maker({
             type: "error",
             data: {
                 statusCode: 400,
-                statusMessage: "XYZ"
+                statusMessage: checkedError ? checkedError.message : GENERIC_ERROR_MESSAGE
             }
         })
     }
@@ -109,27 +111,40 @@ async function updateItem (req, db) {
     }
     : req.body ?? {}
 
-    const {completed, id, name} = processor({
-        type: "update",
-        data: {
-            ...requestPath, ...requestBody
+    try {        
+        const {completed, id, name} = processor({
+            type: "update",
+            data: {
+                ...requestPath, ...requestBody
+            }
+        })
+    
+        await db.updateItem(id, {
+            name,
+            completed
+        });
+    
+        const item = await db.getItem(id);
+    
+        return {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            statusCode: 200,
+            data: {data: item, success: true}
         }
-    })
+    } catch (error) {
+        const checkedError = validateError(error);
 
-    await db.updateItem(id, {
-        name,
-        completed
-    });
-
-    const item = await db.getItem(id);
-
-    return {
-        headers: {
-            "Content-Type": "application/json"
-        },
-        statusCode: 200,
-        data: {data: item, success: true}
+        return maker({
+            type: "error",
+            data: {
+                statusCode: 400,
+                statusMessage: checkedError ? checkedError.message : GENERIC_ERROR_MESSAGE
+            }
+        })
     }
+
 };
 
 /**
@@ -140,22 +155,34 @@ async function updateItem (req, db) {
  * @returns {Promise<ResponseAgnostic>} 
  */
 async function deleteItem (req, db)  {
-    const {id} = processor({
-        type: "delete",
-        data: req.pathParams ?? {}
-    })
-
-    await db.removeItem(id);
-
-    return {
-        statusCode: 204,
-        headers: {
-            "Content-Type": "application/json"
-        },
-        data: {
-            success: true,
-            data: id
+    try {        
+        const {id} = processor({
+            type: "delete",
+            data: req.pathParams ?? {}
+        })
+    
+        await db.removeItem(id);
+    
+        return {
+            statusCode: 204,
+            headers: {
+                "Content-Type": "application/json"
+            },
+            data: {
+                success: true,
+                data: id
+            }
         }
+    } catch (error) {
+        const checkedError = validateError(error);
+
+        return maker({
+            type: "error",
+            data: {
+                statusCode: 400,
+                statusMessage: checkedError ? checkedError.message : GENERIC_ERROR_MESSAGE
+            }
+        })
     }
 };
 

@@ -3,6 +3,7 @@ const {v4 : uuid} = require('uuid');
 
 const VALID_NAME_MIN_LENGTH = 2
 const VALID_ID_MIN_LENGTH = 3
+const GENERIC_ERROR_MESSAGE = "Something went wrong."
 
 /**
  * @typedef MakerConfiguration
@@ -151,7 +152,20 @@ class NeverError extends Error {
     }
 }
 
+/**
+ * 
+ * @param {unknown} error 
+ * @returns {InvalidPropertyError | NeverError | null}
+ */
+function validateError(error) {
+    if ((error instanceof InvalidPropertyError) || (error instanceof NeverError)) {
+        return error
+    }
+    return null
+}
 module.exports = {
     maker,
-    processor
+    processor,
+    validateError,
+    GENERIC_ERROR_MESSAGE
 }
