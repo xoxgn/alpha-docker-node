@@ -44,7 +44,7 @@ function reservationAgent({database}) {
                 return deleteItem(request, database);
 
             default:
-                return maker({ // @todo
+                return maker({
                     type: "error",
                     data: {
                         statusCode: 405,

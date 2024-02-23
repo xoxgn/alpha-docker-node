@@ -1,6 +1,5 @@
 // @ts-check
-const {v4 : uuid} = require('uuid');
-const { maker } = require('../utils');
+const { maker, processor } = require('../utils');
 
 /**
  * 
@@ -10,9 +9,9 @@ const { maker } = require('../utils');
  * @returns {Promise<ResponseAgnostic>} 
  */
 async function addItem(req, db) {
-    const {body} = req;
+    let receivedBody = req.body;
 
-    if (!body) {
+    if (receivedBody == null) {
         return maker({
             type: "error",
             data: {
@@ -22,23 +21,48 @@ async function addItem(req, db) {
         })
     }
 
-    const item = {
-        id: uuid(),
-        name: body.name,
-        completed: false,
-    };
+    if (typeof receivedBody === "string") {
+        try {
+            /** @type { Exclude<typeof req.body, string|undefined>} */
+            const parsedBody = JSON.parse(receivedBody);
 
-    await db.storeItem(item);
-
-    return {
-        headers: {
-            "Content-Type": "application/json"
-        },
-        statusCode: 200,
-        data: {
-            success: true,
-            data: item
+            receivedBody = parsedBody
+        } catch (error) {
+            return maker({
+                type: "error",
+                data: {
+                    statusCode: 400,
+                    statusMessage: "Bad Request. POST body must be valid JSON."
+                }
+            })
         }
+    }
+
+    try {
+        const {name} = receivedBody
+        const item = processor({type: "create", data: {name}})
+    
+        await db.storeItem(item);
+    
+        return {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            statusCode: 201, // HTTP Created
+            data: {
+                success: true,
+                data: item
+            }
+        }
+
+    } catch (error) {
+        return maker({
+            type: "error",
+            data: {
+                statusCode: 400,
+                statusMessage: "XYZ"
+            }
+        })
     }
 };
 
@@ -76,13 +100,27 @@ async function getItems (req, db) {
  * @returns {Promise<ResponseAgnostic>} 
  */
 async function updateItem (req, db) {
-    const {id} = req.pathParams || {}
-    const {completed, name} = req.body || {}
+    const requestPath = req.pathParams || {}
+    const requestBody = typeof req.body == "string" 
+    // if only a string is received, it will be interpreted as the 'new name'
+    ? {
+        name: req.body,
+        completed: undefined
+    }
+    : req.body ?? {}
+
+    const {completed, id, name} = processor({
+        type: "update",
+        data: {
+            ...requestPath, ...requestBody
+        }
+    })
 
     await db.updateItem(id, {
-        name: name,
-        completed: completed,
+        name,
+        completed
     });
+
     const item = await db.getItem(id);
 
     return {
@@ -102,7 +140,10 @@ async function updateItem (req, db) {
  * @returns {Promise<ResponseAgnostic>} 
  */
 async function deleteItem (req, db)  {
-    const {id} = req.pathParams || {}
+    const {id} = processor({
+        type: "delete",
+        data: req.pathParams ?? {}
+    })
 
     await db.removeItem(id);
 
@@ -126,7 +167,7 @@ async function deleteItem (req, db)  {
  * @property {string} method
  * @property {{id?: string}} [pathParams]
  * @property {Partial<{max: number, after: string, before: string}>} [queryParams]
- * @property {Partial<{name: string, completed: boolean}>} [body]
+ * @property {Partial<{name: string, completed: boolean}> | string} [body]
  * 
  * 
  * @typedef ResponseAgnostic
